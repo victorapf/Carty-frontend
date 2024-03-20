@@ -1,16 +1,17 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet} from "react-native";
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import { validarCampoObligatorio, mostrarAlerta, validarFormatoEmail } from "../utils/utils";
+import * as Yup from 'yup';
 import { Formik  } from "formik";
 
-
+const  validationSchema = Yup.object({
+    name: Yup.string().trim().min(3, 'Nombre muy corto').required('Ingresa tu nombre completo'),
+    username: Yup.string().trim().min(3, 'Nombre de usuario muy corto').required('Ingresa un nombre de usuario'),
+    email: Yup.string().email('Correo no válido').required('Ingresa un correo electrónico'),
+    password: Yup.string().trim().min(6, 'Contraseña muy corta').required('Ingresa una contraseña'),
+    cpassword: Yup.string().trim().equals([Yup.ref('password'), null], 'Las contraseñas no coinciden ').required('Confirma la contraseña')
+})
 const SignInForm = () => {
-    const [name, setName] = useState("");
-    const [username, setUsername] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [repeatPassword, setRepeatPassword] = useState("")
     const [showPassword1, setShowPassword1] = useState(false);
     const [showPassword2, setShowPassword2] = useState(false);
 
@@ -30,32 +31,14 @@ const SignInForm = () => {
         setRepeatPassword2(text);
     };
 
-    //Funcion para validaciones en FRONTEND
-    const handle = async () => {
-        if(!validarCampoObligatorio(name) || !validarCampoObligatorio(username) || !validarCampoObligatorio(email) || !validarCampoObligatorio(password)) {
-            mostrarAlerta('Error', 'Por favor complete todos los campos');
-        }else if(!validarFormatoEmail(email)) {
-            mostrarAlerta('Error','Por favor ingrese un correo electrónico válido')
-        }else{
-            console.log('Nombre:', name)
-            console.log('Username:', username)
-            console.log('Email:', email)
-            console.log('Password:', password)
-
-            setName('');
-            setUsername('');
-            setEmail('');
-            setPassword('');
-            setRepeatPassword('');
-        } 
-    }
     return(
         <View style={{top:100, paddingLeft: 30}}>
             <Formik
             initialValues={{name: '', username: '', email: '', password: '', cpassword: ''}}
+            validationSchema={validationSchema}
             onSubmit={(values) =>{
                 console.log(values)
-            }}>{({handleChange, handleBlur, handleSubmit, values})=>(
+            }}>{({handleChange, handleBlur, handleSubmit, values, errors, touched})=>(
                 <View>
                     <TextInput 
                     style={styles.inputName}
@@ -64,13 +47,15 @@ const SignInForm = () => {
                     onChangeText={handleChange('name')}
                     values={values.name}
                     />
+                    {errors.name && touched.name ? <Text style={styles.errorText}>{errors.name}</Text> : null}
                     <TextInput 
                     style={styles.inputUsername}
                     placeholder="Usuario"
                     onBlur={handleBlur('username')}
                     onChangeText={handleChange('username')}
                     values={values.username}
-                    />   
+                    />
+                    {errors.username && touched.username ? <Text style={styles.errorText2}>{errors.username}</Text> : null} 
                     <TextInput 
                     style={styles.inputEmail}
                     placeholder="Correo Electrónico"
@@ -78,6 +63,7 @@ const SignInForm = () => {
                     onChangeText={handleChange('email')}
                     values={values.email}
                     />
+                    {errors.email && touched.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}  
                     <View style={{flexDirection: 'row', alignItems: 'center'}}>
                         <TextInput
                         style={styles.inputPassword}
@@ -97,27 +83,30 @@ const SignInForm = () => {
                             onPress={togglePasswordVisibility1}
                             />
                         </TouchableOpacity>
+                        {errors.password && touched.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
                     </View>
-
-                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                        <TextInput
-                        style={styles.inputRepeatPassword}
-                        placeholder=" Confirmar Contraseña"
-                        onBlur={handleBlur('cpassword')}
-                        onChangeText={handleChange('cpassword')}
-                        values={values.cpassword}
-                        secureTextEntry={!showPassword2}
-                        />
-                        <TouchableOpacity 
-                        style={{top:60, right: 50}}
-                        onPress={handlePasswordChange2}>
-                            <AntDesign
-                            name={showPassword2 ? 'eyeo': 'eye'}
-                            size={25}
-                            color="#333"
-                            onPress={togglePasswordVisibility2}
+                    <View>
+                        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                            <TextInput
+                            style={styles.inputRepeatPassword}
+                            placeholder=" Confirmar Contraseña"
+                            onBlur={handleBlur('cpassword')}
+                            onChangeText={handleChange('cpassword')}
+                            values={values.cpassword}
+                            secureTextEntry={!showPassword2}
                             />
-                        </TouchableOpacity>
+                            <TouchableOpacity 
+                            style={{top:60, right: 50}}
+                            onPress={handlePasswordChange2}>
+                                <AntDesign
+                                name={showPassword2 ? 'eyeo': 'eye'}
+                                size={25}
+                                color="#333"
+                                onPress={togglePasswordVisibility2}
+                                />
+                            </TouchableOpacity>
+                        </View>
+                        {errors.cpassword && touched.cpassword ? <Text style={styles.errorText}>{errors.cpassword}</Text> : null}
                     </View>
                     <TouchableOpacity 
                     style={styles.button}
@@ -190,6 +179,17 @@ const styles = StyleSheet.create({
         marginTop: 20,
         borderRadius: 30,
         backgroundColor: '#051249',
+    },
+    errorText: {
+        color: 'red',
+        fontSize: 14,
+        paddingLeft: 15,
+    },
+    errorText2: {
+        color: 'red',
+        fontSize: 14,
+        paddingLeft: 15,
+        marginTop: 30
     }
 })
 
